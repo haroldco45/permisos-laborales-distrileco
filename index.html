@@ -641,9 +641,23 @@
         <div class="backup-section">
           <button class="btn btn-backup" onclick="descargarBackup()">📦 Descargar Backup (.json)</button>
           <label class="btn btn-restore" style="cursor:pointer;">
-            📂 Restaurar Backup
+            📂 Restaurar Archivo
             <input type="file" accept=".json" style="display:none" onchange="restaurarBackup(event)">
           </label>
+          <button class="btn btn-maritza" onclick="mostrarRestaurarWA()">📋 Restaurar desde WhatsApp</button>
+        </div>
+        <!-- Panel restaurar desde WhatsApp -->
+        <div id="panelRestaurarWA" style="display:none; margin-top:18px;">
+          <div style="background:#f0f4fb; border:2px solid #2456a4; border-radius:10px; padding:16px;">
+            <p style="font-size:0.88rem; color:#1a3a6b; font-weight:700; font-family:'Montserrat',sans-serif; margin-bottom:10px;">
+              📋 Pega aquí el código de restauración que te envió el empleado por WhatsApp:
+            </p>
+            <textarea id="codigoWA" placeholder="Pega el código aquí..." style="width:100%; min-height:100px; font-family:monospace; font-size:0.78rem; border:1.5px solid #cdd3dc; border-radius:7px; padding:10px; resize:vertical;"></textarea>
+            <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
+              <button class="btn btn-save" onclick="restaurarDesdeWA()" style="flex:1;">✅ Restaurar Permisos</button>
+              <button class="btn btn-secondary" onclick="cerrarRestaurarWA()" style="flex:1;">✕ Cancelar</button>
+            </div>
+          </div>
         </div>
         <div id="backup-info" style="margin-top:18px; font-size:0.85rem; color:#666;"></div>
       </div>
@@ -1075,6 +1089,58 @@ function exportarExcelHistorial() {
   toast('📊 Excel exportado con '+permisos.length+' registros');
 }
 
+// ===== RESTAURAR DESDE WHATSAPP =====
+function mostrarRestaurarWA() {
+  document.getElementById('panelRestaurarWA').style.display = 'block';
+  document.getElementById('codigoWA').value = '';
+  document.getElementById('codigoWA').focus();
+}
+
+function cerrarRestaurarWA() {
+  document.getElementById('panelRestaurarWA').style.display = 'none';
+  document.getElementById('codigoWA').value = '';
+}
+
+function restaurarDesdeWA() {
+  const raw = document.getElementById('codigoWA').value.trim();
+  if (!raw) { toast('⚠️ Pega el código primero'); return; }
+
+  try {
+    // Puede que el usuario haya pegado el mensaje completo de WhatsApp
+    // Extraer solo la parte base64 (última línea larga antes de la línea de guiones)
+    let codigo = raw;
+    // Si tiene saltos de línea, buscar la línea que parece base64
+    const lineas = raw.split('\n').map(l => l.trim()).filter(l => l.length > 50);
+    // La línea base64 solo tiene caracteres A-Z a-z 0-9 + / =
+    const lineaB64 = lineas.find(l => /^[A-Za-z0-9+/=]+$/.test(l));
+    if (lineaB64) codigo = lineaB64;
+
+    // Decodificar base64
+    const jsonStr = decodeURIComponent(escape(atob(codigo)));
+    const data = JSON.parse(jsonStr);
+    const nuevos = data.permisos || data;
+
+    if (!Array.isArray(nuevos)) throw new Error('Formato inválido');
+
+    // Fusionar sin duplicados
+    const ids = new Set(permisos.map(p => p.id));
+    const agregados = nuevos.filter(p => !ids.has(p.id));
+    permisos = [...permisos, ...agregados];
+    localStorage.setItem('distrileco_permisos', JSON.stringify(permisos));
+
+    cerrarRestaurarWA();
+    renderStats();
+    toast('✅ ' + agregados.length + ' permiso(s) restaurados — ve a Historial e imprime');
+    document.getElementById('backup-info').innerHTML =
+      '<strong style="color:green;">✅ Restauración exitosa</strong> — ' +
+      agregados.length + ' nuevo(s) de ' + nuevos.length + ' en el código.';
+
+  } catch(err) {
+    toast('❌ Código inválido — asegúrate de pegar el código completo');
+    console.error(err);
+  }
+}
+
 // ===== BACKUP =====
 function descargarBackup() {
   if(!permisos.length) { toast('⚠️ No hay permisos para respaldar'); return; }
@@ -1175,63 +1241,71 @@ window.addEventListener('resize', ajustarBotonesPorDispositivo);
 
 // ===== ENVIAR BACKUP A MARITZA =====
 function enviarBackupMaritza() {
-  if (!permisos.length) {
-    toast('⚠️ No hay permisos guardados para enviar');
-    return;
-  }
-  // Guardar primero el permiso actual si tiene nombre
+  // Guardar permiso actual si tiene nombre
   const nombreActual = document.getElementById('nombre').value.trim();
   if (nombreActual) {
     guardarPermiso();
   }
 
-  const backupData = JSON.stringify({
+  if (!permisos.length) {
+    toast('⚠️ No hay permisos guardados para enviar');
+    return;
+  }
+
+  const fechaHoy = new Date().toISOString().split('T')[0];
+  const ultimo = permisos[0];
+
+  // Construir resumen legible de los últimos permisos (máx 3) para el mensaje
+  let resumenPermisos = '';
+  const maxMostrar = Math.min(permisos.length, 3);
+  for (let i = 0; i < maxMostrar; i++) {
+    const p = permisos[i];
+    resumenPermisos += `\n📋 ${p.nombre || '-'} | ${p.cargo || '-'} | ${p.fechaSolicitud || '-'} | ${p.estadoPerm || 'Pendiente'}`;
+  }
+  if (permisos.length > 3) {
+    resumenPermisos += `\n... y ${permisos.length - 3} permiso(s) más`;
+  }
+
+  // Serializar TODOS los permisos en base64 para enviarlo en el mensaje
+  // (sin firmas para que no sea enorme)
+  const permisosLimpios = permisos.map(p => {
+    const copia = Object.assign({}, p);
+    delete copia.firmaEmp;
+    delete copia.firmaAut;
+    return copia;
+  });
+
+  const backupStr = JSON.stringify({
     version: '1.0',
     fecha: new Date().toISOString(),
-    permisos: permisos
-  }, null, 2);
+    permisos: permisosLimpios
+  });
 
-  // Crear blob y link de descarga para adjuntar manualmente
-  const blob = new Blob([backupData], { type: 'application/json' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
-  const fechaHoy = new Date().toISOString().split('T')[0];
-  const nombreArchivo = 'Backup_Permisos_' + fechaHoy + '.json';
-  a.download = nombreArchivo;
-  a.click();
-  URL.revokeObjectURL(url);
+  // Codificar en base64 para poder pegarlo y restaurarlo
+  const backupB64 = btoa(unescape(encodeURIComponent(backupStr)));
 
-  // Mensaje para WhatsApp a Maritza con instrucciones
-  const empleado  = nombreActual || (permisos[0] ? permisos[0].nombre : 'Empleado');
-  const totalPerm = permisos.length;
-  const ultimo    = permisos[0];
-  const resumen   = ultimo
-    ? '📋 *Último permiso:* ' + ultimo.nombre + ' — ' + (ultimo.fechaSolicitud || '') + '\n' +
-      '🏷️ ' + (ultimo.tipoPermiso || '') + ' | ' + (ultimo.motivo ? ultimo.motivo.slice(0,60) + '...' : '') + '\n'
-    : '';
-
+  // Mensaje para Maritza: incluye el backup completo codificado
   const mensaje =
     '📦 *BACKUP PERMISOS LABORALES*\n' +
-    '*Distrileco Caucasia S.A.S.*\n\n' +
-    resumen +
-    '📂 *Total registros:* ' + totalPerm + '\n' +
-    '📅 *Fecha:* ' + fechaHoy + '\n\n' +
-    '⬆️ *Archivo adjunto:* ' + nombreArchivo + '\n\n' +
-    '📌 *Instrucciones para Maritza:*\n' +
+    '*Distrileco Caucasia S.A.S.* — ' + fechaHoy + '\n' +
+    '📊 *Total registros:* ' + permisos.length +
+    resumenPermisos + '\n\n' +
+    '━━━━━━━━━━━━━━━━━━━━\n' +
+    '📌 *INSTRUCCIONES PARA MARITZA:*\n' +
     '1️⃣ Abre la app en el PC\n' +
-    '2️⃣ Ve a la pestaña 💾 *Backup*\n' +
-    '3️⃣ Toca *📂 Restaurar Backup*\n' +
-    '4️⃣ Selecciona el archivo recibido\n' +
-    '5️⃣ Ve a 📋 *Historial* y busca el permiso\n' +
-    '6️⃣ Toca 🖨️ *Imprimir* para sacar la copia física\n\n' +
-    '_Enviado desde App Permisos Distrileco_';
+    '2️⃣ Ve a pestaña 💾 *Backup*\n' +
+    '3️⃣ Clic en *📋 Restaurar desde WhatsApp*\n' +
+    '4️⃣ Pega el código de abajo y confirma\n' +
+    '5️⃣ Ve a 📋 *Historial* → busca el permiso\n' +
+    '6️⃣ Clic 🖨️ *Imprimir*\n' +
+    '━━━━━━━━━━━━━━━━━━━━\n' +
+    '🔑 *CÓDIGO DE RESTAURACIÓN:*\n' +
+    backupB64 + '\n' +
+    '━━━━━━━━━━━━━━━━━━━━\n' +
+    '_App Permisos Distrileco — Vibras Positivas HM_';
 
-  // Pequeño delay para que descargue primero, luego abrir WhatsApp
-  setTimeout(function() {
-    window.open('https://wa.me/573107322677?text=' + encodeURIComponent(mensaje), '_blank');
-    toast('✅ Backup descargado — adjúntalo en WhatsApp a Maritza');
-  }, 800);
+  window.open('https://wa.me/573107322677?text=' + encodeURIComponent(mensaje), '_blank');
+  toast('✅ Backup enviado a Maritza por WhatsApp');
 }
 
 // ===== TOAST =====
