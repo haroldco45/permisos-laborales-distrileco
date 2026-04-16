@@ -253,6 +253,9 @@
   .btn-backup:hover { background: #6c3483; transform: translateY(-1px); }
   .btn-restore { background: #2980b9; color: white; }
   .btn-restore:hover { background: #2471a3; transform: translateY(-1px); }
+  .btn-maritza { background: linear-gradient(135deg, #e91e8c 0%, #c2185b 100%); color: white; }
+  .btn-maritza:hover { background: linear-gradient(135deg, #c2185b 0%, #880e4f 100%); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(233,30,140,0.4); }
+  .btn-restore:hover { background: #2471a3; transform: translateY(-1px); }
 
   /* ===== HISTORIAL ===== */
   .historial-empty {
@@ -596,7 +599,8 @@
       <button class="btn btn-save" onclick="guardarPermiso()">💾 Guardar Permiso</button>
       <button class="btn btn-wa" onclick="enviarWhatsApp()">📲 Enviar WhatsApp</button>
       <button class="btn btn-excel" onclick="exportarExcel()">📊 Exportar Excel</button>
-      <button class="btn btn-print" onclick="window.print()">🖨️ Imprimir</button>
+      <button class="btn btn-print" id="btnImprimir" onclick="window.print()">🖨️ Imprimir</button>
+      <button class="btn btn-maritza" id="btnMaritza" onclick="enviarBackupMaritza()">📩 Enviar Backup a Maritza</button>
     </div>
 
   </div><!-- /formulario -->
@@ -1145,6 +1149,89 @@ function renderStats() {
       </div>
     </div>
   ` : '<p style="color:#aaa; font-size:0.88rem;">No hay registros aún.</p>';
+}
+
+// ===== DETECCIÓN MÓVIL =====
+function esCelular() {
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
+}
+
+function ajustarBotonesPorDispositivo() {
+  const btnImprimir = document.getElementById('btnImprimir');
+  const btnMaritza  = document.getElementById('btnMaritza');
+  if (!btnImprimir || !btnMaritza) return;
+  if (esCelular()) {
+    btnImprimir.style.display  = 'none';   // En celular: no imprimir
+    btnMaritza.style.display   = 'flex';   // En celular: enviar a Maritza
+  } else {
+    btnImprimir.style.display  = 'flex';   // En PC: imprimir
+    btnMaritza.style.display   = 'none';   // En PC: no necesita enviar a Maritza
+  }
+}
+
+// Ejecutar al cargar y al cambiar tamaño
+window.addEventListener('load', ajustarBotonesPorDispositivo);
+window.addEventListener('resize', ajustarBotonesPorDispositivo);
+
+// ===== ENVIAR BACKUP A MARITZA =====
+function enviarBackupMaritza() {
+  if (!permisos.length) {
+    toast('⚠️ No hay permisos guardados para enviar');
+    return;
+  }
+  // Guardar primero el permiso actual si tiene nombre
+  const nombreActual = document.getElementById('nombre').value.trim();
+  if (nombreActual) {
+    guardarPermiso();
+  }
+
+  const backupData = JSON.stringify({
+    version: '1.0',
+    fecha: new Date().toISOString(),
+    permisos: permisos
+  }, null, 2);
+
+  // Crear blob y link de descarga para adjuntar manualmente
+  const blob = new Blob([backupData], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  const fechaHoy = new Date().toISOString().split('T')[0];
+  const nombreArchivo = 'Backup_Permisos_' + fechaHoy + '.json';
+  a.download = nombreArchivo;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  // Mensaje para WhatsApp a Maritza con instrucciones
+  const empleado  = nombreActual || (permisos[0] ? permisos[0].nombre : 'Empleado');
+  const totalPerm = permisos.length;
+  const ultimo    = permisos[0];
+  const resumen   = ultimo
+    ? '📋 *Último permiso:* ' + ultimo.nombre + ' — ' + (ultimo.fechaSolicitud || '') + '\n' +
+      '🏷️ ' + (ultimo.tipoPermiso || '') + ' | ' + (ultimo.motivo ? ultimo.motivo.slice(0,60) + '...' : '') + '\n'
+    : '';
+
+  const mensaje =
+    '📦 *BACKUP PERMISOS LABORALES*\n' +
+    '*Distrileco Caucasia S.A.S.*\n\n' +
+    resumen +
+    '📂 *Total registros:* ' + totalPerm + '\n' +
+    '📅 *Fecha:* ' + fechaHoy + '\n\n' +
+    '⬆️ *Archivo adjunto:* ' + nombreArchivo + '\n\n' +
+    '📌 *Instrucciones para Maritza:*\n' +
+    '1️⃣ Abre la app en el PC\n' +
+    '2️⃣ Ve a la pestaña 💾 *Backup*\n' +
+    '3️⃣ Toca *📂 Restaurar Backup*\n' +
+    '4️⃣ Selecciona el archivo recibido\n' +
+    '5️⃣ Ve a 📋 *Historial* y busca el permiso\n' +
+    '6️⃣ Toca 🖨️ *Imprimir* para sacar la copia física\n\n' +
+    '_Enviado desde App Permisos Distrileco_';
+
+  // Pequeño delay para que descargue primero, luego abrir WhatsApp
+  setTimeout(function() {
+    window.open('https://wa.me/573107322677?text=' + encodeURIComponent(mensaje), '_blank');
+    toast('✅ Backup descargado — adjúntalo en WhatsApp a Maritza');
+  }, 800);
 }
 
 // ===== TOAST =====
