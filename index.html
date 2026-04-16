@@ -1,1 +1,1171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solicitud de Permisos Laborales — Distrileco</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Source+Sans+3:wght@300;400;600&display=swap');
 
+  :root {
+    --azul: #1a3a6b;
+    --azul2: #2456a4;
+    --rojo: #c0392b;
+    --oro: #e8a020;
+    --blanco: #ffffff;
+    --gris: #f4f6f9;
+    --gris2: #e0e4ea;
+    --texto: #1c2230;
+    --sombra: 0 4px 24px rgba(26,58,107,0.13);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Source Sans 3', sans-serif;
+    background: var(--gris);
+    color: var(--texto);
+    min-height: 100vh;
+  }
+
+  /* ===== HEADER ===== */
+  .header {
+    background: var(--azul);
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 14px 24px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.25);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-logo {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--oro);
+  }
+  .header-title { flex: 1; }
+  .header-title h1 { font-family: 'Montserrat', sans-serif; font-size: 1.15rem; font-weight: 800; letter-spacing: 0.5px; }
+  .header-title p { font-size: 0.78rem; color: #b8c8e8; margin-top: 1px; }
+  .header-badge {
+    background: var(--rojo);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+    font-family: 'Montserrat', sans-serif;
+  }
+
+  /* ===== TABS ===== */
+  .tabs {
+    display: flex;
+    background: var(--azul2);
+    padding: 0 24px;
+    gap: 4px;
+    overflow-x: auto;
+  }
+  .tab {
+    padding: 11px 20px;
+    color: rgba(255,255,255,0.7);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .tab.active { color: white; border-bottom-color: var(--oro); }
+  .tab:hover { color: white; }
+
+  /* ===== CONTENIDO ===== */
+  .content { max-width: 780px; margin: 0 auto; padding: 24px 16px 60px; }
+
+  /* ===== CARD ===== */
+  .card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--sombra);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .card-header {
+    background: linear-gradient(135deg, var(--azul) 0%, var(--azul2) 100%);
+    color: white;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  .card-header .icon { font-size: 1.1rem; }
+  .card-body { padding: 20px; }
+
+  /* ===== FORMULARIO ===== */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-grid.col3 { grid-template-columns: 1fr 1fr 1fr; }
+  .form-grid.col1 { grid-template-columns: 1fr; }
+
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.span2 { grid-column: span 2; }
+  .form-group.span3 { grid-column: span 3; }
+
+  label {
+    font-size: 0.73rem;
+    font-weight: 600;
+    color: var(--azul);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-family: 'Montserrat', sans-serif;
+  }
+  input[type=text], input[type=date], input[type=time], input[type=number], select, textarea {
+    border: 1.5px solid var(--gris2);
+    border-radius: 7px;
+    padding: 9px 12px;
+    font-size: 0.9rem;
+    font-family: 'Source Sans 3', sans-serif;
+    color: var(--texto);
+    background: #fafbfd;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--azul2);
+    box-shadow: 0 0 0 3px rgba(36,86,164,0.12);
+    background: white;
+  }
+  textarea { resize: vertical; min-height: 70px; }
+
+  /* ===== TIPO PERMISO ===== */
+  .tipo-permiso {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .tipo-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border: 2px solid var(--gris2);
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #555;
+    transition: all 0.2s;
+    background: #fafbfd;
+  }
+  .tipo-btn.active-verde { border-color: #27ae60; background: #eafaf1; color: #1e8449; }
+  .tipo-btn.active-rojo { border-color: var(--rojo); background: #fdecea; color: var(--rojo); }
+  .tipo-btn input[type=radio] { display: none; }
+
+  /* ===== FIRMA ===== */
+  .firma-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .firma-box { display: flex; flex-direction: column; gap: 8px; }
+  .firma-box label { font-size: 0.73rem; font-weight: 600; color: var(--azul); text-transform: uppercase; letter-spacing: 0.4px; font-family: 'Montserrat', sans-serif; }
+  .firma-canvas-wrap {
+    border: 2px dashed var(--gris2);
+    border-radius: 10px;
+    background: #fafbfd;
+    position: relative;
+    overflow: hidden;
+    cursor: crosshair;
+    transition: border-color 0.2s;
+  }
+  .firma-canvas-wrap:hover { border-color: var(--azul2); }
+  .firma-canvas-wrap canvas { display: block; width: 100%; }
+  .firma-label {
+    text-align: center;
+    font-size: 0.72rem;
+    color: #999;
+    padding: 4px 0 8px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  .btn-limpiar {
+    background: none;
+    border: 1px solid var(--gris2);
+    border-radius: 6px;
+    padding: 5px 12px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    color: var(--rojo);
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    transition: all 0.2s;
+    align-self: flex-end;
+  }
+  .btn-limpiar:hover { background: #fdecea; border-color: var(--rojo); }
+
+  /* ===== BOTONES ACCIÓN ===== */
+  .acciones {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 20px 0 0;
+  }
+  .btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 22px;
+    border-radius: 9px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.83rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+  .btn-wa { background: #25D366; color: white; }
+  .btn-wa:hover { background: #1ebe5a; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(37,211,102,0.35); }
+  .btn-excel { background: #217346; color: white; }
+  .btn-excel:hover { background: #185c38; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(33,115,70,0.35); }
+  .btn-print { background: var(--azul); color: white; }
+  .btn-print:hover { background: #122d54; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(26,58,107,0.35); }
+  .btn-save { background: var(--oro); color: white; }
+  .btn-save:hover { background: #d48f1a; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(232,160,32,0.35); }
+  .btn-danger { background: var(--rojo); color: white; }
+  .btn-danger:hover { background: #a93226; }
+  .btn-secondary { background: var(--gris2); color: var(--texto); }
+  .btn-secondary:hover { background: #cdd3dc; }
+  .btn-backup { background: #7d3c98; color: white; }
+  .btn-backup:hover { background: #6c3483; transform: translateY(-1px); }
+  .btn-restore { background: #2980b9; color: white; }
+  .btn-restore:hover { background: #2471a3; transform: translateY(-1px); }
+
+  /* ===== HISTORIAL ===== */
+  .historial-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: #aaa;
+    font-size: 0.9rem;
+  }
+  .historial-empty .big { font-size: 2.5rem; margin-bottom: 10px; }
+  .registro-item {
+    border: 1.5px solid var(--gris2);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .registro-item:hover { border-color: var(--azul2); background: #f0f4fb; }
+  .registro-meta { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; }
+  .registro-nombre { font-weight: 700; font-size: 0.95rem; font-family: 'Montserrat', sans-serif; color: var(--azul); }
+  .registro-fecha { font-size: 0.78rem; color: #888; }
+  .registro-info { font-size: 0.82rem; color: #555; margin-top: 5px; }
+  .badge-tipo {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-family: 'Montserrat', sans-serif;
+    letter-spacing: 0.3px;
+  }
+  .badge-cr { background: #eafaf1; color: #1e8449; border: 1px solid #a9dfbf; }
+  .badge-sr { background: #fdecea; color: var(--rojo); border: 1px solid #f1948a; }
+  .reg-actions { display: flex; gap: 8px; margin-top: 10px; }
+
+  /* ===== TOAST ===== */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #1e3a5f;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.83rem;
+    font-weight: 600;
+    z-index: 9999;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.22);
+    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ===== MODAL VER ===== */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(10,20,40,0.55);
+    z-index: 500;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: white;
+    border-radius: 14px;
+    max-width: 680px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .modal-header {
+    background: var(--azul);
+    color: white;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 14px 14px 0 0;
+  }
+  .modal-header h3 { font-family: 'Montserrat', sans-serif; font-size: 0.95rem; font-weight: 700; }
+  .modal-close { background: none; border: none; color: white; font-size: 1.4rem; cursor: pointer; padding: 0 4px; }
+  .modal-body { padding: 20px; }
+  .modal-field { margin-bottom: 10px; }
+  .modal-field strong { display: block; font-size: 0.72rem; color: var(--azul); text-transform: uppercase; letter-spacing: 0.4px; font-family: 'Montserrat', sans-serif; margin-bottom: 2px; }
+  .modal-field span { font-size: 0.9rem; }
+  .modal-firmas { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+  .modal-firma img { width: 100%; border: 1.5px dashed var(--gris2); border-radius: 8px; }
+
+  /* ===== BACKUP ===== */
+  .backup-section { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+  /* ===== PRINT ===== */
+  @media print {
+    body { background: white !important; }
+    .header, .tabs, .acciones, #toast { display: none !important; }
+    .card { box-shadow: none !important; border: 1px solid #ddd; }
+    .content { max-width: 100%; padding: 0; }
+    #seccion-historial, #seccion-backup { display: none !important; }
+    .firma-canvas-wrap canvas { border: 1px solid #ccc; }
+  }
+
+  @media (max-width: 600px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .form-grid.col3 { grid-template-columns: 1fr 1fr; }
+    .form-group.span2, .form-group.span3 { grid-column: span 1; }
+    .firma-container { grid-template-columns: 1fr; }
+    .modal-firmas { grid-template-columns: 1fr; }
+  }
+
+  .divider { height: 1px; background: var(--gris2); margin: 6px 0 14px; }
+  .seccion-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--azul2);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .seccion-title::after { content: ''; flex: 1; height: 1px; background: var(--gris2); }
+
+  /* Código SPL */
+  .codigo-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--gris);
+    border: 1px solid var(--gris2);
+    border-radius: 7px;
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    color: #888;
+    font-family: 'Montserrat', sans-serif;
+    margin-bottom: 16px;
+  }
+  .codigo-box strong { color: var(--azul); }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <img class="header-logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==" id="logoImg" alt="Distrileco">
+  <div class="header-title">
+    <h1>DISTRILECO CAUCASIA S.A.S.</h1>
+    <p>Sistema Digital de Permisos Laborales · Código: SPL-GH</p>
+  </div>
+  <span class="header-badge">v1.0</span>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="showTab('formulario', this)">📝 Nuevo Permiso</div>
+  <div class="tab" onclick="showTab('historial', this)">📋 Historial</div>
+  <div class="tab" onclick="showTab('backup', this)">💾 Backup</div>
+</div>
+
+<div class="content">
+
+  <!-- ============ TAB: FORMULARIO ============ -->
+  <div id="seccion-formulario">
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+      <div class="codigo-box">Formato: <strong>SPL-GH</strong> &nbsp;|&nbsp; Versión: <strong>01</strong> &nbsp;|&nbsp; Aprobación: <strong>18/02/2019</strong></div>
+      <button class="btn btn-secondary" onclick="limpiarFormulario()" style="font-size:0.78rem; padding:8px 14px;">🗑️ Limpiar</button>
+    </div>
+
+    <!-- DATOS DEL SOLICITANTE -->
+    <div class="card">
+      <div class="card-header"><span class="icon">👤</span> Datos del Solicitante</div>
+      <div class="card-body">
+        <div class="form-grid">
+          <div class="form-group span2">
+            <label>Nombre y Apellido del Solicitante *</label>
+            <input type="text" id="nombre" placeholder="Nombre completo" required>
+          </div>
+          <div class="form-group">
+            <label>Número de Identificación *</label>
+            <input type="text" id="cedula" placeholder="Cédula de ciudadanía">
+          </div>
+          <div class="form-group">
+            <label>Expedida en (Ciudad)</label>
+            <input type="text" id="ccDe" placeholder="Ciudad">
+          </div>
+          <div class="form-group">
+            <label>Cargo *</label>
+            <input type="text" id="cargo" placeholder="Cargo del empleado">
+          </div>
+          <div class="form-group">
+            <label>Área</label>
+            <input type="text" id="area" placeholder="Área o departamento">
+          </div>
+          <div class="form-group span2">
+            <label>Jefe Inmediato *</label>
+            <input type="text" id="jefe" placeholder="Nombre del jefe inmediato">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DATOS DEL PERMISO -->
+    <div class="card">
+      <div class="card-header"><span class="icon">📅</span> Datos del Permiso</div>
+      <div class="card-body">
+
+        <div class="seccion-title">Fecha de Solicitud</div>
+        <div class="form-grid col3">
+          <div class="form-group">
+            <label>Fecha de Solicitud *</label>
+            <input type="date" id="fechaSolicitud">
+          </div>
+          <div class="form-group">
+            <label>Modalidad</label>
+            <select id="modalidad">
+              <option value="">Seleccionar...</option>
+              <option value="Fortuita">Fortuita</option>
+              <option value="Con Anticipación">Con Anticipación</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Número de Días / Horas</label>
+            <input type="text" id="numDiasHoras" placeholder="Ej: 1 día / 4 horas">
+          </div>
+        </div>
+
+        <div class="divider"></div>
+        <div class="seccion-title">Tipo de Permiso</div>
+        <div class="tipo-permiso" id="tipoBtns">
+          <label class="tipo-btn" id="btn-cr">
+            <input type="radio" name="tipoPermiso" value="Con Remuneración" onchange="selTipo('Con Remuneración')">
+            ✅ Con Remuneración
+          </label>
+          <label class="tipo-btn" id="btn-sr">
+            <input type="radio" name="tipoPermiso" value="Sin Remuneración" onchange="selTipo('Sin Remuneración')">
+            ❌ Sin Remuneración
+          </label>
+        </div>
+
+        <div class="divider" style="margin-top:16px;"></div>
+        <div class="seccion-title">Horario del Permiso</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Fecha de Salida</label>
+            <input type="date" id="fechaSalida">
+          </div>
+          <div class="form-group">
+            <label>Hora de Salida</label>
+            <input type="time" id="horaSalida">
+          </div>
+          <div class="form-group">
+            <label>Fecha de Llegada</label>
+            <input type="date" id="fechaLlegada">
+          </div>
+          <div class="form-group">
+            <label>Hora de Llegada</label>
+            <input type="time" id="horaLlegada">
+          </div>
+        </div>
+
+        <div class="divider"></div>
+        <div class="form-grid col1">
+          <div class="form-group">
+            <label>Motivo del Permiso *</label>
+            <textarea id="motivo" placeholder="Describa el motivo del permiso..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Persona que Reemplaza (aplica o no aplica)</label>
+            <input type="text" id="reemplaza" placeholder="Nombre del reemplazante o 'No Aplica'">
+          </div>
+          <div class="form-group">
+            <label>Observaciones</label>
+            <textarea id="observaciones" placeholder="Observaciones adicionales..."></textarea>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+        <div class="seccion-title">Autorización</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Fecha de Autorización</label>
+            <input type="date" id="fechaAut">
+          </div>
+          <div class="form-group">
+            <label>Hora de Autorización</label>
+            <input type="time" id="horaAut">
+          </div>
+          <div class="form-group">
+            <label>Nombre de Quien Autoriza</label>
+            <input type="text" id="nombreAut" placeholder="Nombre completo">
+          </div>
+          <div class="form-group">
+            <label>Estado del Permiso</label>
+            <select id="estadoPerm">
+              <option value="Pendiente">⏳ Pendiente</option>
+              <option value="Autorizado">✅ Autorizado</option>
+              <option value="Rechazado">❌ Rechazado</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FIRMAS -->
+    <div class="card">
+      <div class="card-header"><span class="icon">✍️</span> Firmas Digitales</div>
+      <div class="card-body">
+        <div class="firma-container">
+          <div class="firma-box">
+            <label>Firma del Empleado</label>
+            <div class="firma-canvas-wrap" id="wrap-emp">
+              <canvas id="canvas-emp" height="120"></canvas>
+            </div>
+            <div class="firma-label">FIRMA DEL EMPLEADO</div>
+            <button class="btn-limpiar" onclick="limpiarFirma('emp')">🗑️ Limpiar firma</button>
+          </div>
+          <div class="firma-box">
+            <label>Firma de Quien Autoriza</label>
+            <div class="firma-canvas-wrap" id="wrap-aut">
+              <canvas id="canvas-aut" height="120"></canvas>
+            </div>
+            <div class="firma-label">FIRMA DE QUIEN AUTORIZA</div>
+            <button class="btn-limpiar" onclick="limpiarFirma('aut')">🗑️ Limpiar firma</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACCIONES -->
+    <div class="acciones">
+      <button class="btn btn-save" onclick="guardarPermiso()">💾 Guardar Permiso</button>
+      <button class="btn btn-wa" onclick="enviarWhatsApp()">📲 Enviar WhatsApp</button>
+      <button class="btn btn-excel" onclick="exportarExcel()">📊 Exportar Excel</button>
+      <button class="btn btn-print" onclick="window.print()">🖨️ Imprimir</button>
+    </div>
+
+  </div><!-- /formulario -->
+
+
+  <!-- ============ TAB: HISTORIAL ============ -->
+  <div id="seccion-historial" class="hidden">
+    <div class="card">
+      <div class="card-header"><span class="icon">📋</span> Historial de Permisos</div>
+      <div class="card-body">
+        <div style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
+          <input type="text" id="buscar" placeholder="🔍 Buscar por nombre, cargo..." oninput="renderHistorial()" style="flex:1; min-width:180px;">
+          <select id="filtroEstado" onchange="renderHistorial()" style="min-width:140px;">
+            <option value="">Todos los estados</option>
+            <option value="Pendiente">⏳ Pendiente</option>
+            <option value="Autorizado">✅ Autorizado</option>
+            <option value="Rechazado">❌ Rechazado</option>
+          </select>
+        </div>
+        <div id="lista-historial"></div>
+      </div>
+    </div>
+    <div class="acciones">
+      <button class="btn btn-excel" onclick="exportarExcelHistorial()">📊 Exportar Todo a Excel</button>
+      <button class="btn btn-danger" onclick="limpiarHistorial()">🗑️ Borrar Todo el Historial</button>
+    </div>
+  </div>
+
+
+  <!-- ============ TAB: BACKUP ============ -->
+  <div id="seccion-backup" class="hidden">
+    <div class="card">
+      <div class="card-header"><span class="icon">💾</span> Copia de Seguridad</div>
+      <div class="card-body">
+        <p style="font-size:0.9rem; color:#555; margin-bottom:20px;">
+          Exporta todos los permisos guardados como archivo JSON para hacer copia de seguridad, o restaura desde un archivo previo.
+        </p>
+        <div class="backup-section">
+          <button class="btn btn-backup" onclick="descargarBackup()">📦 Descargar Backup (.json)</button>
+          <label class="btn btn-restore" style="cursor:pointer;">
+            📂 Restaurar Backup
+            <input type="file" accept=".json" style="display:none" onchange="restaurarBackup(event)">
+          </label>
+        </div>
+        <div id="backup-info" style="margin-top:18px; font-size:0.85rem; color:#666;"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="icon">📊</span> Estadísticas</div>
+      <div class="card-body" id="stats-body">
+        <p style="color:#aaa; font-size:0.88rem;">No hay registros aún.</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /content -->
+
+<!-- MODAL VER PERMISO -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>📄 Detalle del Permiso</h3>
+      <button class="modal-close" onclick="cerrarModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-contenido"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast">✅ Guardado exitosamente</div>
+
+<!-- LOGO BASE64 LOAD -->
+<script>
+// Cargar logo
+(function(){
+  const src = "/mnt/user-data/uploads/logodistrileco.PNG";
+  const img = document.getElementById('logoImg');
+  // En producción usar URL de GitHub Pages, aquí mostramos placeholder
+  img.src = "https://i.ibb.co/0Cgf5gN/distrileco-placeholder.png";
+  img.onerror = function(){ this.style.background='#1a3a6b'; this.src='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 54 54"><rect fill="%231a3a6b" width="54" height="54" rx="27"/><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="18" font-weight="bold">D</text></svg>'; };
+})();
+</script>
+
+<script>
+// ===== ESTADO GLOBAL =====
+let permisos = JSON.parse(localStorage.getItem('distrileco_permisos') || '[]');
+let editandoId = null;
+
+// ===== TABS =====
+function showTab(tab, el) {
+  ['formulario','historial','backup'].forEach(t => {
+    document.getElementById('seccion-'+t).classList.add('hidden');
+  });
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('seccion-'+tab).classList.remove('hidden');
+  el.classList.add('active');
+  if(tab === 'historial') renderHistorial();
+  if(tab === 'backup') renderStats();
+}
+
+// ===== FIRMAS =====
+const firmas = {};
+['emp','aut'].forEach(id => {
+  const canvas = document.getElementById('canvas-'+id);
+  const wrap = document.getElementById('wrap-'+id);
+  canvas.width = wrap.offsetWidth || 320;
+  const ctx = canvas.getContext('2d');
+  ctx.strokeStyle = '#1a3a6b';
+  ctx.lineWidth = 2.2;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  let drawing = false, lastX=0, lastY=0;
+
+  function getPos(e, canvas) {
+    const r = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / r.width;
+    const scaleY = canvas.height / r.height;
+    if(e.touches) return { x: (e.touches[0].clientX - r.left)*scaleX, y: (e.touches[0].clientY - r.top)*scaleY };
+    return { x: (e.clientX - r.left)*scaleX, y: (e.clientY - r.top)*scaleY };
+  }
+
+  function start(e) { e.preventDefault(); drawing=true; const p=getPos(e,canvas); lastX=p.x; lastY=p.y; }
+  function move(e) {
+    if(!drawing) return; e.preventDefault();
+    const p=getPos(e,canvas);
+    ctx.beginPath(); ctx.moveTo(lastX,lastY); ctx.lineTo(p.x,p.y); ctx.stroke();
+    lastX=p.x; lastY=p.y;
+  }
+  function end(e) { drawing=false; firmas[id]=canvas.toDataURL(); }
+
+  canvas.addEventListener('mousedown', start);
+  canvas.addEventListener('mousemove', move);
+  canvas.addEventListener('mouseup', end);
+  canvas.addEventListener('mouseleave', end);
+  canvas.addEventListener('touchstart', start, {passive:false});
+  canvas.addEventListener('touchmove', move, {passive:false});
+  canvas.addEventListener('touchend', end);
+});
+
+window.addEventListener('resize', ()=>{
+  ['emp','aut'].forEach(id => {
+    const c = document.getElementById('canvas-'+id);
+    const w = document.getElementById('wrap-'+id);
+    const data = c.toDataURL();
+    c.width = w.offsetWidth || 320;
+    const ctx = c.getContext('2d');
+    ctx.strokeStyle='#1a3a6b'; ctx.lineWidth=2.2; ctx.lineCap='round'; ctx.lineJoin='round';
+    const img = new Image(); img.src=data; img.onload=()=>ctx.drawImage(img,0,0);
+  });
+});
+
+function limpiarFirma(id) {
+  const c = document.getElementById('canvas-'+id);
+  c.getContext('2d').clearRect(0,0,c.width,c.height);
+  firmas[id] = null;
+}
+
+// ===== TIPO PERMISO =====
+function selTipo(v) {
+  document.getElementById('btn-cr').className = 'tipo-btn' + (v==='Con Remuneración'?' active-verde':'');
+  document.getElementById('btn-sr').className = 'tipo-btn' + (v==='Sin Remuneración'?' active-rojo':'');
+}
+
+// ===== FECHA DEFAULT =====
+(function(){
+  const hoy = new Date().toISOString().split('T')[0];
+  document.getElementById('fechaSolicitud').value = hoy;
+  document.getElementById('fechaAut').value = hoy;
+  const now = new Date();
+  const hora = now.toTimeString().slice(0,5);
+  document.getElementById('horaAut').value = hora;
+})();
+
+// ===== RECOGER DATOS =====
+function recogerDatos() {
+  const tipoR = document.querySelector('input[name=tipoPermiso]:checked');
+  const emp = document.getElementById('canvas-emp');
+  const aut = document.getElementById('canvas-aut');
+  const empBlank = isCanvasBlank(emp);
+  const autBlank = isCanvasBlank(aut);
+  return {
+    id: editandoId || Date.now(),
+    nombre: v('nombre'), cedula: v('cedula'), ccDe: v('ccDe'),
+    cargo: v('cargo'), area: v('area'), jefe: v('jefe'),
+    fechaSolicitud: v('fechaSolicitud'), modalidad: v('modalidad'),
+    numDiasHoras: v('numDiasHoras'),
+    tipoPermiso: tipoR ? tipoR.value : '',
+    fechaSalida: v('fechaSalida'), horaSalida: v('horaSalida'),
+    fechaLlegada: v('fechaLlegada'), horaLlegada: v('horaLlegada'),
+    motivo: v('motivo'), reemplaza: v('reemplaza'), observaciones: v('observaciones'),
+    fechaAut: v('fechaAut'), horaAut: v('horaAut'),
+    nombreAut: v('nombreAut'), estadoPerm: v('estadoPerm'),
+    firmaEmp: empBlank ? null : emp.toDataURL(),
+    firmaAut: autBlank ? null : aut.toDataURL(),
+    timestamp: new Date().toISOString()
+  };
+}
+
+function v(id) { return document.getElementById(id).value.trim(); }
+
+function isCanvasBlank(canvas) {
+  const ctx = canvas.getContext('2d');
+  const data = ctx.getImageData(0,0,canvas.width,canvas.height).data;
+  return !data.some(x => x !== 0);
+}
+
+// ===== VALIDAR =====
+function validar(d) {
+  if(!d.nombre) { toast('⚠️ Nombre del solicitante requerido'); return false; }
+  if(!d.cedula) { toast('⚠️ Número de identificación requerido'); return false; }
+  if(!d.cargo) { toast('⚠️ Cargo requerido'); return false; }
+  if(!d.motivo) { toast('⚠️ Motivo del permiso requerido'); return false; }
+  return true;
+}
+
+// ===== GUARDAR =====
+function guardarPermiso() {
+  const d = recogerDatos();
+  if(!validar(d)) return;
+  if(editandoId) {
+    const idx = permisos.findIndex(p => p.id === editandoId);
+    if(idx !== -1) permisos[idx] = d;
+    editandoId = null;
+  } else {
+    permisos.unshift(d);
+  }
+  localStorage.setItem('distrileco_permisos', JSON.stringify(permisos));
+  toast('✅ Permiso guardado exitosamente');
+}
+
+// ===== LIMPIAR FORM =====
+function limpiarFormulario() {
+  ['nombre','cedula','ccDe','cargo','area','jefe','numDiasHoras','fechaSalida',
+   'horaSalida','fechaLlegada','horaLlegada','motivo','reemplaza','observaciones','nombreAut'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.value = '';
+  });
+  document.getElementById('modalidad').value = '';
+  document.getElementById('estadoPerm').value = 'Pendiente';
+  document.querySelectorAll('input[name=tipoPermiso]').forEach(r => r.checked = false);
+  document.getElementById('btn-cr').className = 'tipo-btn';
+  document.getElementById('btn-sr').className = 'tipo-btn';
+  limpiarFirma('emp'); limpiarFirma('aut');
+  editandoId = null;
+  const hoy = new Date().toISOString().split('T')[0];
+  document.getElementById('fechaSolicitud').value = hoy;
+  const hora = new Date().toTimeString().slice(0,5);
+  document.getElementById('horaAut').value = hora;
+  document.getElementById('fechaAut').value = hoy;
+  toast('🗑️ Formulario limpiado');
+}
+
+// ===== WHATSAPP =====
+function enviarWhatsApp() {
+  const d = recogerDatos();
+  if(!validar(d)) return;
+  const texto = `📋 *PERMISO LABORAL - DISTRILECO*\n\n`+
+    `👤 *Empleado:* ${d.nombre}\n`+
+    `🪪 *C.C.:* ${d.cedula} de ${d.ccDe}\n`+
+    `🏢 *Cargo:* ${d.cargo} | *Área:* ${d.area}\n`+
+    `👔 *Jefe:* ${d.jefe}\n\n`+
+    `📅 *Fecha Solicitud:* ${fmt(d.fechaSolicitud)}\n`+
+    `🏷️ *Tipo:* ${d.tipoPermiso || 'No definido'} | *Modalidad:* ${d.modalidad}\n`+
+    `⏱️ *Duración:* ${d.numDiasHoras}\n\n`+
+    `🚪 *Salida:* ${fmt(d.fechaSalida)} ${d.horaSalida}\n`+
+    `🏠 *Llegada:* ${fmt(d.fechaLlegada)} ${d.horaLlegada}\n\n`+
+    `📝 *Motivo:* ${d.motivo}\n`+
+    `🔄 *Reemplaza:* ${d.reemplaza}\n\n`+
+    `✅ *Estado:* ${d.estadoPerm}\n`+
+    `📌 *Autoriza:* ${d.nombreAut}\n\n`+
+    `_Enviado desde Sistema Permisos Distrileco_`;
+  const url = `https://wa.me/573107322677?text=${encodeURIComponent(texto)}`;
+  window.open(url, '_blank');
+}
+
+function fmt(f) {
+  if(!f) return '-';
+  const [y,m,d2] = f.split('-');
+  return `${d2}/${m}/${y}`;
+}
+
+// ===== EXCEL (FORMULARIO ACTUAL) =====
+function exportarExcel() {
+  const d = recogerDatos();
+  const ws_data = [
+    ['DISTRILECO CAUCASIA S.A.S. - SOLICITUD DE PERMISOS LABORALES'],
+    ['Código: SPL-GH | Versión: 01 | Aprobación: 18/02/2019'],
+    [],
+    ['DATOS DEL SOLICITANTE'],
+    ['Nombre y Apellido', d.nombre],
+    ['Número de Identificación', d.cedula],
+    ['Expedida en', d.ccDe],
+    ['Cargo', d.cargo],
+    ['Área', d.area],
+    ['Jefe Inmediato', d.jefe],
+    [],
+    ['DATOS DEL PERMISO'],
+    ['Fecha de Solicitud', fmt(d.fechaSolicitud)],
+    ['Modalidad', d.modalidad],
+    ['Número de Días/Horas', d.numDiasHoras],
+    ['Tipo de Permiso', d.tipoPermiso],
+    ['Fecha Salida', fmt(d.fechaSalida)],
+    ['Hora Salida', d.horaSalida],
+    ['Fecha Llegada', fmt(d.fechaLlegada)],
+    ['Hora Llegada', d.horaLlegada],
+    ['Motivo', d.motivo],
+    ['Persona que Reemplaza', d.reemplaza],
+    ['Observaciones', d.observaciones],
+    [],
+    ['AUTORIZACIÓN'],
+    ['Fecha Autorización', fmt(d.fechaAut)],
+    ['Hora Autorización', d.horaAut],
+    ['Nombre Quien Autoriza', d.nombreAut],
+    ['Estado', d.estadoPerm],
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(ws_data);
+  ws['!cols'] = [{wch:28},{wch:40}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Permiso');
+  XLSX.writeFile(wb, `Permiso_${d.nombre.replace(/\s/g,'_')}_${new Date().toISOString().split('T')[0]}.xlsx`);
+  toast('📊 Excel exportado');
+}
+
+// ===== HISTORIAL =====
+function renderHistorial() {
+  const busq = document.getElementById('buscar').value.toLowerCase();
+  const filtro = document.getElementById('filtroEstado').value;
+  let lista = permisos.filter(p => {
+    const match = (p.nombre+p.cargo+p.area+p.cedula).toLowerCase().includes(busq);
+    const est = !filtro || p.estadoPerm === filtro;
+    return match && est;
+  });
+  const cont = document.getElementById('lista-historial');
+  if(!lista.length) {
+    cont.innerHTML = `<div class="historial-empty"><div class="big">📋</div>No hay permisos registrados aún.</div>`;
+    return;
+  }
+  cont.innerHTML = lista.map(p => {
+    const badge = p.tipoPermiso === 'Con Remuneración'
+      ? `<span class="badge-tipo badge-cr">${p.tipoPermiso}</span>`
+      : p.tipoPermiso === 'Sin Remuneración'
+      ? `<span class="badge-tipo badge-sr">${p.tipoPermiso}</span>`
+      : '';
+    const est = p.estadoPerm==='Autorizado' ? '✅' : p.estadoPerm==='Rechazado' ? '❌' : '⏳';
+    return `<div class="registro-item">
+      <div class="registro-meta">
+        <span class="registro-nombre">${p.nombre}</span>
+        <span class="registro-fecha">${fmt(p.fechaSolicitud)}</span>
+      </div>
+      <div class="registro-info">${p.cargo} · ${p.area} &nbsp; ${badge} &nbsp; ${est} ${p.estadoPerm}</div>
+      <div class="registro-info" style="color:#aaa;">${p.motivo ? p.motivo.slice(0,80)+'...' : ''}</div>
+      <div class="reg-actions">
+        <button class="btn btn-secondary" style="font-size:0.75rem; padding:6px 12px;" onclick="verPermiso(${p.id})">👁️ Ver</button>
+        <button class="btn btn-save" style="font-size:0.75rem; padding:6px 12px;" onclick="editarPermiso(${p.id})">✏️ Editar</button>
+        <button class="btn btn-wa" style="font-size:0.75rem; padding:6px 12px;" onclick="waPermiso(${p.id})">📲 WA</button>
+        <button class="btn btn-danger" style="font-size:0.75rem; padding:6px 12px;" onclick="eliminarPermiso(${p.id})">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function verPermiso(id) {
+  const p = permisos.find(x => x.id === id);
+  if(!p) return;
+  document.getElementById('modal-contenido').innerHTML = `
+    <div class="form-grid">
+      <div class="modal-field span2"><strong>Nombre</strong><span>${p.nombre}</span></div>
+      <div class="modal-field"><strong>Cédula</strong><span>${p.cedula} de ${p.ccDe}</span></div>
+      <div class="modal-field"><strong>Cargo / Área</strong><span>${p.cargo} / ${p.area}</span></div>
+      <div class="modal-field span2"><strong>Jefe Inmediato</strong><span>${p.jefe}</span></div>
+      <div class="modal-field"><strong>Fecha Solicitud</strong><span>${fmt(p.fechaSolicitud)}</span></div>
+      <div class="modal-field"><strong>Tipo Permiso</strong><span>${p.tipoPermiso}</span></div>
+      <div class="modal-field"><strong>Modalidad</strong><span>${p.modalidad}</span></div>
+      <div class="modal-field"><strong>Duración</strong><span>${p.numDiasHoras}</span></div>
+      <div class="modal-field"><strong>Salida</strong><span>${fmt(p.fechaSalida)} ${p.horaSalida}</span></div>
+      <div class="modal-field"><strong>Llegada</strong><span>${fmt(p.fechaLlegada)} ${p.horaLlegada}</span></div>
+      <div class="modal-field span2"><strong>Motivo</strong><span>${p.motivo}</span></div>
+      <div class="modal-field span2"><strong>Reemplaza</strong><span>${p.reemplaza}</span></div>
+      <div class="modal-field span2"><strong>Observaciones</strong><span>${p.observaciones}</span></div>
+      <div class="modal-field"><strong>Autorización</strong><span>${fmt(p.fechaAut)} ${p.horaAut}</span></div>
+      <div class="modal-field"><strong>Autoriza</strong><span>${p.nombreAut}</span></div>
+      <div class="modal-field span2"><strong>Estado</strong><span>${p.estadoPerm}</span></div>
+    </div>
+    ${(p.firmaEmp||p.firmaAut) ? `<div class="modal-firmas">
+      ${p.firmaEmp ? `<div><strong>Firma Empleado</strong><br><img src="${p.firmaEmp}" alt="Firma Empleado"></div>` : ''}
+      ${p.firmaAut ? `<div><strong>Firma Autoriza</strong><br><img src="${p.firmaAut}" alt="Firma Autoriza"></div>` : ''}
+    </div>` : ''}
+  `;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function cerrarModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+document.getElementById('modalOverlay').addEventListener('click', function(e){
+  if(e.target === this) cerrarModal();
+});
+
+function editarPermiso(id) {
+  const p = permisos.find(x => x.id === id);
+  if(!p) return;
+  editandoId = id;
+  ['nombre','cedula','ccDe','cargo','area','jefe','fechaSolicitud','modalidad','numDiasHoras',
+   'fechaSalida','horaSalida','fechaLlegada','horaLlegada','motivo','reemplaza','observaciones',
+   'fechaAut','horaAut','nombreAut'].forEach(k => {
+    const el = document.getElementById(k);
+    if(el) el.value = p[k] || '';
+  });
+  document.getElementById('estadoPerm').value = p.estadoPerm || 'Pendiente';
+  if(p.tipoPermiso) {
+    const r = document.querySelector(`input[name=tipoPermiso][value="${p.tipoPermiso}"]`);
+    if(r) { r.checked=true; selTipo(p.tipoPermiso); }
+  }
+  // Restaurar firmas
+  ['emp','aut'].forEach(fid => {
+    const key = fid==='emp'?'firmaEmp':'firmaAut';
+    const c = document.getElementById('canvas-'+fid);
+    const ctx = c.getContext('2d');
+    ctx.clearRect(0,0,c.width,c.height);
+    if(p[key]) {
+      const img = new Image(); img.src=p[key];
+      img.onload=()=>{ ctx.strokeStyle='#1a3a6b'; ctx.drawImage(img,0,0,c.width,c.height); };
+    }
+  });
+  showTab('formulario', document.querySelectorAll('.tab')[0]);
+  document.querySelectorAll('.tab')[0].click();
+  toast('✏️ Editando permiso de '+p.nombre);
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function waPermiso(id) {
+  const p = permisos.find(x => x.id === id);
+  if(!p) return;
+  const texto = `📋 *PERMISO LABORAL - DISTRILECO*\n\n`+
+    `👤 *${p.nombre}*\n🪪 C.C: ${p.cedula}\n🏢 ${p.cargo} - ${p.area}\n`+
+    `🏷️ ${p.tipoPermiso} | ${p.modalidad}\n`+
+    `📅 ${fmt(p.fechaSolicitud)} | ⏱️ ${p.numDiasHoras}\n`+
+    `🚪 Salida: ${fmt(p.fechaSalida)} ${p.horaSalida}\n`+
+    `🏠 Llegada: ${fmt(p.fechaLlegada)} ${p.horaLlegada}\n`+
+    `📝 ${p.motivo}\n✅ ${p.estadoPerm} - Autoriza: ${p.nombreAut}`;
+  window.open(`https://wa.me/573107322677?text=${encodeURIComponent(texto)}`, '_blank');
+}
+
+function eliminarPermiso(id) {
+  if(!confirm('¿Eliminar este permiso?')) return;
+  permisos = permisos.filter(p => p.id !== id);
+  localStorage.setItem('distrileco_permisos', JSON.stringify(permisos));
+  renderHistorial();
+  toast('🗑️ Permiso eliminado');
+}
+
+function limpiarHistorial() {
+  if(!confirm('⚠️ ¿Borrar TODOS los permisos? Esta acción no se puede deshacer.')) return;
+  permisos = [];
+  localStorage.setItem('distrileco_permisos', JSON.stringify(permisos));
+  renderHistorial();
+  toast('🗑️ Historial borrado');
+}
+
+// ===== EXCEL HISTORIAL =====
+function exportarExcelHistorial() {
+  if(!permisos.length) { toast('⚠️ No hay permisos guardados'); return; }
+  const cols = ['nombre','cedula','cargo','area','jefe','fechaSolicitud','modalidad','numDiasHoras',
+    'tipoPermiso','fechaSalida','horaSalida','fechaLlegada','horaLlegada','motivo','reemplaza',
+    'observaciones','fechaAut','horaAut','nombreAut','estadoPerm'];
+  const headers = ['Nombre','Cédula','Cargo','Área','Jefe','Fecha Solicitud','Modalidad','Días/Horas',
+    'Tipo Permiso','Fecha Salida','Hora Salida','Fecha Llegada','Hora Llegada','Motivo','Reemplaza',
+    'Observaciones','Fecha Aut.','Hora Aut.','Quien Autoriza','Estado'];
+  const data = [headers, ...permisos.map(p => cols.map(c => {
+    const val = p[c] || '';
+    return (c==='fechaSolicitud'||c==='fechaSalida'||c==='fechaLlegada'||c==='fechaAut') ? fmt(val) : val;
+  }))];
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  ws['!cols'] = headers.map((_,i) => ({wch: i===13||i===14||i===15?35:18}));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Historial Permisos');
+  XLSX.writeFile(wb, `Historial_Permisos_Distrileco_${new Date().toISOString().split('T')[0]}.xlsx`);
+  toast('📊 Excel exportado con '+permisos.length+' registros');
+}
+
+// ===== BACKUP =====
+function descargarBackup() {
+  if(!permisos.length) { toast('⚠️ No hay permisos para respaldar'); return; }
+  const blob = new Blob([JSON.stringify({version:'1.0', fecha: new Date().toISOString(), permisos}, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `Backup_Permisos_Distrileco_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  toast('💾 Backup descargado ('+permisos.length+' registros)');
+}
+
+function restaurarBackup(event) {
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      const nuevos = data.permisos || data;
+      if(!Array.isArray(nuevos)) throw new Error('Formato inválido');
+      if(!confirm(`¿Restaurar ${nuevos.length} permisos? (Se fusionarán con los existentes)`)) return;
+      // Fusionar sin duplicados por ID
+      const ids = new Set(permisos.map(p => p.id));
+      const agregados = nuevos.filter(p => !ids.has(p.id));
+      permisos = [...permisos, ...agregados];
+      localStorage.setItem('distrileco_permisos', JSON.stringify(permisos));
+      toast(`✅ Restaurados ${agregados.length} permisos nuevos`);
+      renderStats();
+      document.getElementById('backup-info').innerHTML = `<strong style="color:green;">✅ Backup restaurado</strong> — ${agregados.length} nuevos registros agregados de ${nuevos.length} en el archivo.`;
+    } catch(err) {
+      toast('❌ Error al leer el backup');
+      console.error(err);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ===== STATS =====
+function renderStats() {
+  const total = permisos.length;
+  const aut = permisos.filter(p => p.estadoPerm==='Autorizado').length;
+  const pend = permisos.filter(p => p.estadoPerm==='Pendiente').length;
+  const rech = permisos.filter(p => p.estadoPerm==='Rechazado').length;
+  const cr = permisos.filter(p => p.tipoPermiso==='Con Remuneración').length;
+  const sr = permisos.filter(p => p.tipoPermiso==='Sin Remuneración').length;
+  document.getElementById('stats-body').innerHTML = total ? `
+    <div style="display:grid; grid-template-columns: repeat(3,1fr); gap:12px; text-align:center;">
+      <div style="background:var(--gris); border-radius:10px; padding:16px;">
+        <div style="font-size:1.8rem; font-weight:800; color:var(--azul); font-family:'Montserrat',sans-serif;">${total}</div>
+        <div style="font-size:0.75rem; color:#888; font-family:'Montserrat',sans-serif; font-weight:600;">TOTAL</div>
+      </div>
+      <div style="background:#eafaf1; border-radius:10px; padding:16px;">
+        <div style="font-size:1.8rem; font-weight:800; color:#1e8449; font-family:'Montserrat',sans-serif;">${aut}</div>
+        <div style="font-size:0.75rem; color:#888; font-family:'Montserrat',sans-serif; font-weight:600;">AUTORIZADOS</div>
+      </div>
+      <div style="background:#fef9e7; border-radius:10px; padding:16px;">
+        <div style="font-size:1.8rem; font-weight:800; color:#e67e22; font-family:'Montserrat',sans-serif;">${pend}</div>
+        <div style="font-size:0.75rem; color:#888; font-family:'Montserrat',sans-serif; font-weight:600;">PENDIENTES</div>
+      </div>
+      <div style="background:#fdecea; border-radius:10px; padding:16px;">
+        <div style="font-size:1.8rem; font-weight:800; color:var(--rojo); font-family:'Montserrat',sans-serif;">${rech}</div>
+        <div style="font-size:0.75rem; color:#888; font-family:'Montserrat',sans-serif; font-weight:600;">RECHAZADOS</div>
+      </div>
+      <div style="background:#eaf4fb; border-radius:10px; padding:16px;">
+        <div style="font-size:1.8rem; font-weight:800; color:#2980b9; font-family:'Montserrat',sans-serif;">${cr}</div>
+        <div style="font-size:0.75rem; color:#888; font-family:'Montserrat',sans-serif; font-weight:600;">CON REMUN.</div>
+      </div>
+      <div style="background:#fdf2f8; border-radius:10px; padding:16px;">
+        <div style="font-size:1.8rem; font-weight:800; color:#8e44ad; font-family:'Montserrat',sans-serif;">${sr}</div>
+        <div style="font-size:0.75rem; color:#888; font-family:'Montserrat',sans-serif; font-weight:600;">SIN REMUN.</div>
+      </div>
+    </div>
+  ` : '<p style="color:#aaa; font-size:0.88rem;">No hay registros aún.</p>';
+}
+
+// ===== TOAST =====
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+</script>
+
+<!-- FOOTER -->
+<div style="text-align:center; padding:20px 16px 32px; font-size:0.72rem; color:#aaa; font-family:'Montserrat',sans-serif;">
+  Desarrollada por <strong style="color:#1a3a6b;">Vibras Positivas HM</strong> — Derechos de Autor Reservados · Colombia 2025
+</div>
+
+</body>
+</html>
